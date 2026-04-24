@@ -1,92 +1,137 @@
-//Varibler
+// ====================
+// Speldata
+// ====================
 let score = 0;
-let timeLeft = 5;
-let GameStarted = false;
-let GameFinished = false;
+let timeLeft = 60;
+let gameStarted = false;
+let gameFinished = false;
 let interval = null;
 
-//HTML DOM
+// ====================
+// HTML-DOM
+// ====================
 const scoreButton = document.getElementById("scoreButton");
-const button2 = document.getElementById("button2");
+const submitButton = document.getElementById("button2");
 const scoreDisplay = document.getElementById("scoreDisplay");
 const timerDisplay = document.getElementById("timerDisplay");
-const label1 = document.getElementById("label1");
+const label = document.getElementById("label1");
 const inputField = document.getElementById("inputName");
+const scoreLabel = document.getElementById("scoreLabel");
+const scoreList = document.getElementById("scoreList");
 
-//UI functions and events
+// ====================
+// INIT-startläge
+// ====================
+inputField.style.display = "none";
+label.style.display = "none";
+submitButton.style.display = "none";
+
+// ====================
+// Events
+// ====================
 scoreButton.addEventListener("click", () => {
-  if(!GameFinished) {
-    increaseScore();
-  }
-  if(!GameStarted) {
+  if (gameFinished) return;
+
+  if (!gameStarted) {
     startGame();
   }
-})
-button2.addEventListener("click", () => {
-  submitHighScore();
-})
-inputField.style.display="none";
-label1.style.display="none";
-button2.style.display="none";
 
-//Functions
+  increaseScore();
+});
+
+submitButton.addEventListener("click", submitHighScore);
+
+// ====================
+// Spellogik
+// ====================
 function startGame() {
+  gameStarted = true;
   interval = setInterval(countdown, 1000);
-  GameStarted = true;
 }
+
 function increaseScore() {
   score++;
   scoreDisplay.innerText = score;
 }
-function endGame() {
-  GameFinished = true;
-  clearInterval(interval);
-  scoreButton.style.display = "none";
-  inputField.style.display = "block";
-  label1.style.display="block";
-  button2.style.display = "block";
 
-}
-function countdown()  {
+function countdown() {
   timeLeft--;
   timerDisplay.innerText = timeLeft;
+
   if (timeLeft <= 0) {
     timerDisplay.innerText = 0;
     endGame();
-
   }
 }
-async function submitHighScore() {
-  const response = await fetch("https://hooks.zapier.com/hooks/catch/8338993/ujs9jj9/", {
-    method: "POST",
-    body: JSON.stringify({ name: inputField.value, score: score }),
-  });
-  console.log(response);
+
+function endGame() {
+  gameFinished = true;
+  clearInterval(interval);
+
+  scoreLabel.innerText = "Dina poäng blev";
+  scoreLabel.style.fontWeight = "bold";
+
+  scoreButton.style.display = "none";
+  inputField.style.display = "block";
+  label.style.display = "block";
+  submitButton.style.display = "block";
 }
 
-/*
-const response = await fetch("https://hooks.zapier.com/hooks/catch/8338993/ujs9jj9/", {
-  method: "POST",
-  body: JSON.stringify({ name: "Jossan", score: 140 }),
-});
-console.log(response);
-*/
+// ====================
+// API - fetch
+// ====================
+async function submitHighScore() {
+  const playerName = inputField.value.trim();
 
-//GET-request
-const url = 'https://script.google.com/macros/s/AKfycbys5aEPMvNCutyhNYYCcQcCjzsi2UtqNspmKyCH-AicJxJbCJMrAoT0LUaYaXhTWA8n/exec';
+  if (playerName.length < 2) {
+    alert("Ditt alias måste vara minst två tecken");
+    return;
+  }
 
-fetch(url)
-  .then(response => {
-    console.log('Response object:', response);
-    return response.json();
-  })
-  .then(data => {
-    console.log('Scoreboard data:', data);
-
-    data.forEach((player, index) => {
-      console.log(`Row ${index + 1}: Name=${player.name}, Score=${player.score}`);
+  try {
+    await fetch("https://hooks.zapier.com/hooks/catch/8338993/ujs9jj9/", {
+      method: "POST",
+      mode: "no-cors",
+      body: JSON.stringify({
+        name: playerName,
+        score: score
+      }),
     });
-  })
-  .catch(error => {
-    console.error('Fetch error:', error);
+
+    alert("Ditt resultat är skickat");
+    submitButton.disabled = true;
+    submitButton.innerText = "Inskickat!";
+
+  } catch (error) {
+    console.error("Fel vid anrop:", error);
+    alert("Något gick fel");
+  }
+}
+
+// ====================
+// API -get/fetch - SCOREBOARD
+// ====================
+fetch('https://script.google.com/macros/s/AKfycbys5aEPMvNCutyhNYYCcQcCjzsi2UtqNspmKyCH-AicJxJbCJMrAoT0LUaYaXhTWA8n/exec')
+  .then(response => response.json())
+  .then(renderScoreboard)
+  .catch(error => console.error("Kunde inte ladda listan:", error));
+
+function renderScoreboard(data) {
+  if (!Array.isArray(data)) return;
+
+  const cleanData = data
+    .map(player => ({
+      name: player.name?.trim() || "Anonym spelare",
+      score: Number(player.score)
+    }))
+    .filter(player => player.score > 0 && !isNaN(player.score))
+    .sort((a, b) => b.score - a.score);
+
+  scoreList.innerHTML = "";
+
+  cleanData.forEach(player => {
+    const li = document.createElement("li");
+    li.innerText = `${player.name}: ${player.score} poäng`;
+    scoreList.appendChild(li);
   });
+}

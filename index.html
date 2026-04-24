@@ -24,9 +24,11 @@
 
 <body>
 
-  <!-- Add your site or application content here -->
   <p>Ta så många poäng du kan</p>
-  <p id="scoreDisplay">0</p>
+  <p>
+    <span id="scoreLabel">Dina poäng:</span>
+    <strong id="scoreDisplay">0</strong>
+  </p>
   <p id="timerDisplay">60</p>
   <button id="scoreButton">Klicka poäng!</button>
  <label id="label1" for="inputName">Namn</label>
@@ -40,6 +42,11 @@
   maxlength="12"
   size="16" />
   <button id="button2">Skicka</button>
+
+  <div id="highscores">
+    <h3>Andra spelares resultat</h3>
+    <ul id="scoreList"></ul>
+  </div>
 
   <script src="js/app.js"></script>
 </body>
