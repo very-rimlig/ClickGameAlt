@@ -2,7 +2,7 @@
 // Speldata
 // ====================
 let score = 0;
-let timeLeft = 60;
+let timeLeft = 5;
 let gameStarted = false;
 let gameFinished = false;
 let interval = null;
@@ -121,7 +121,7 @@ function renderScoreboard(data) {
 
   const cleanData = data
     .map(player => ({
-      name: player.name?.trim() || "Anonym spelare",
+      name: (player.name != null ? String(player.name).trim() : "") || "Anonym spelare", //lagt in metod som ovandlar input till string
       score: Number(player.score)
     }))
     .filter(player => player.score > 0 && !isNaN(player.score))
